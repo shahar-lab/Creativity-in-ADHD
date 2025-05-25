@@ -1,0 +1,22 @@
+ID,reason,,,Tal's Notes,Group
+talerditest,Did not exploit,,,TEST,
+talerditest,Game length too short,,,TEST,
+999999,Game length too short,,,TEST,
+talerditest,Game duration too short,,,TEST,
+999999,Game duration too short,,,TEST,
+aWb5B4,Game duration too short,,,Online,Control
+x8Q5jE1h,Game duration too short,,,Not in the list,
+EXAMPLE,Paused for too long,,,TEST,
+vQtQiu,Paused for too long,,,Lab,ADHD
+9CHQKL,Paused for too long,,,Online,Control
+LSV8bI,Paused for too long,,,Lab,Control
+x8Q5jE1h,Paused for too long,,,Not in the list,
+uhLE7P,Explore length outlier,,,Lab,Control
+ EG8LWj,Explore length outlier,,,Lab,Control
+jUleiG,Explore length outlier,,,Lab,ADHD
+EDEWtP,Exploit length outlier,,,Lab,ADHD
+x2GCd4,Exploit length outlier,,,Lab,Control
+,,,,,
+,,,,,
+,,,,,
+plus one with unsaved data and hence 81 participants (91-10),,,,,
