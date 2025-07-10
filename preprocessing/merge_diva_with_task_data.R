@@ -25,6 +25,14 @@ df = merge(task,diva, by = c('subjectid'),all.y = F)
 x = task$subjectid[task$subjectid %in% diva$subjectid == F]
 x = df$subjectid[df$subjectid %in% task$subjectid == F]
 
+
+
+#### ADD HYP CODE
+df$subtype_hyp = ifelse(df$diva_diagnosis_type == "below_diva_criteria" , "TD", NA)
+df$subtype_hyp = ifelse(df$diva_diagnosis_type == "primary_inattentive" , "inattantive", df$subtype_hyp)
+df$subtype_hyp = ifelse(df$diva_diagnosis_type == "primary_hyperactive/impulsive" , "combined/hyp", df$subtype_hyp)
+df$subtype_hyp = ifelse(df$diva_diagnosis_type == "combined" , "combined/hyp", df$subtype_hyp)
+
 #### comments for correction of subjects id
 #ywsSnI should have lower case L instead of I. fixed manually in the task file
 #"52MCE2"   "p3juAg"   "KHWkGA" - 1 childhood dysfunction domain
