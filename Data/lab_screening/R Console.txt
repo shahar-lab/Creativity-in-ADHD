@@ -1,0 +1,43 @@
+
+R version 4.5.0 (2025-04-11) -- "How About a Twenty-Six"
+Copyright (C) 2025 The R Foundation for Statistical Computing
+Platform: x86_64-apple-darwin20
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+  Natural language support but running in an English locale
+
+R is a collaborative project with many contributors.
+Type 'contributors()' for more information and
+'citation()' on how to cite R or R packages in publications.
+
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for an HTML browser interface to help.
+Type 'q()' to quit R.
+
+During startup - Warning messages:
+1: Setting LC_CTYPE failed, using "C" 
+2: Setting LC_COLLATE failed, using "C" 
+3: Setting LC_TIME failed, using "C" 
+4: Setting LC_MESSAGES failed, using "C" 
+5: Setting LC_MONETARY failed, using "C" 
+[R.app GUI 1.81 (8526) x86_64-apple-darwin20]
+
+WARNING: You're using a non-UTF8 locale, therefore only ASCII characters will work.
+Please read R for Mac OS X FAQ (see Help) section 9 and adjust your system preferences accordingly.
+> load("/Users/Tulum/Downloads/df_for_creativity (1).Rdata")
+Warning message:
+In load("/Users/Tulum/Downloads/df_for_creativity (1).Rdata") :
+  strings not representable in native encoding will be translated to UTF-8
+> load("/Users/Tulum/Downloads/df_for_creativity (1).Rdata")
+Warning message:
+In load("/Users/Tulum/Downloads/df_for_creativity (1).Rdata") :
+  strings not representable in native encoding will be translated to UTF-8
+> load("/Users/Tulum/Downloads/df_for_creativity (1).Rdata")
+Warning message:
+In load("/Users/Tulum/Downloads/df_for_creativity (1).Rdata") :
+  strings not representable in native encoding will be translated to UTF-8
+2026-05-23 12:25:30.538 R[1328:13837] The class 'NSSavePanel' overrides the method identifier.  This method is implemented by class 'NSWindow'
+> 
