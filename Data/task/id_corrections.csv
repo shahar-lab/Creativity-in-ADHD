@@ -1,15 +1,11 @@
-﻿ID,action,new_ID,reason,,,
-אורי,fix,2wDFfq,hebrew typo,,,cnXgb2
-TEST2,drop,,test participant,,,
-test,drop,,test participant,,,
-d,drop,,test participant,,,
-OurLAP,drop,,test participant,,,"מופיע גם בdf_all, לנסות להבין האם יש כזה נבדק"
-999998,drop,,test participant,,,
-323834622,drop,,not clear what it is,,,
-ywsSnI,fix ,ywsSnl,typo (last letter),,,
-mkbvhj,fix,mkbvhJ,typo (last letter),,,
-000001,drop,,test participant,,,
-,,,,,,
-,,,,,,
-,,,,,,
-QPKs1S,drop,,high audit/cudit,,,להוסיף ולעדכן
+﻿ID,action,new_ID,reason,comments
+אורי,fix,2wDFfq,hebrew typo,the participant wrote her name in the task instead the id 
+TEST2,drop,,test participant,
+test,drop,,test participant,
+d,drop,,test participant,
+999998,drop,,test participant,
+323834622,fix,9usBnT,typo (personal id instead of task id) ,
+ywsSnI,fix ,ywsSnl,typo (last letter),
+mkbvhj,fix,mkbvhJ,typo (last letter),
+000001,drop,,test participant,
+QPKs1S,drop,,high audit/cudit,"Also in df_all, should be excluded"

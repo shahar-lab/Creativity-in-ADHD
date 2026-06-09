@@ -5,12 +5,9 @@ library(dplyr)
 cfg_all <- read_csv("Data/task/cfg_all_ready_for_merge.csv")
 participant_data <- read_csv("Data/lab_screening/df_for_creativity_all.csv")
 
-# check basic structure of both datasets
+# check dataset sizes
 nrow(cfg_all)
 nrow(participant_data)
-
-names(cfg_all)
-names(participant_data)
 
 # check for duplicate IDs in task data
 cfg_all %>%
@@ -37,6 +34,28 @@ cfg_only <- cfg_all %>%
 nrow(participant_only)
 nrow(cfg_only)
 
-# inspect mismatch tables
+# inspect mismatch tables if needed
 View(participant_only)
 View(cfg_only)
+
+# check task exclusions for participants missing from cfg_all
+exclusions <- read_csv("Data/task/exclusions.csv")
+
+participant_excluded <- participant_only %>%
+  left_join(exclusions, by = c("subjectid" = "ID"))
+
+# check how many participant-only cases are explained by exclusions
+sum(!is.na(participant_excluded$reason))
+sum(is.na(participant_excluded$reason))
+
+# inspect participant-only cases with exclusion reasons
+participant_excluded %>%
+  select(subjectid, declared_group, cohort, reason) %>%
+  View()
+
+# merge task data with participant data for matched IDs only
+df_creativity_ADHD <- cfg_all %>%
+  inner_join(participant_data, by = c("ID" = "subjectid"))
+
+# save merged dataset
+write_csv(df_creativity_ADHD, "Data/df_creativity_ADHD.csv")

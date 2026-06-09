@@ -24,6 +24,6 @@ cfg_all <- cfg_all %>%
 
 #remove duplicates
 cfg_all <- cfg_all %>%
-  distinct()
+  distinct(ID, .keep_all = TRUE)
 
 write_csv(cfg_all, "Data/task/cfg_all_ready_for_merge.csv")
