@@ -5,6 +5,22 @@ library(dplyr)
 cfg_all <- read_csv("Data/task/cfg_all_ready_for_merge.csv")
 participant_data <- read_csv("Data/lab_screening/df_for_creativity_all.csv")
 
+# identify participants without valid group assignment
+missing_group <- participant_data %>%
+  filter(
+    is.na(declared_group) |
+      !declared_group %in% c("ADHD", "TD")
+  )
+
+nrow(missing_group)
+
+missing_group %>%
+  select(subjectid, declared_group)
+
+# exclude participants without valid group assignment
+participant_data <- participant_data %>%
+  filter(declared_group %in% c("ADHD", "TD"))
+
 # check dataset sizes
 nrow(cfg_all)
 nrow(participant_data)
