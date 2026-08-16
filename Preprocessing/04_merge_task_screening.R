@@ -96,10 +96,19 @@ nrow(df_creativity_ADHD)
 
 table(df_creativity_ADHD$Study_Location, useNA = "ifany")
 
+
+# create cleaner ADHD subtype variable
+df_creativity_ADHD <- df_creativity_ADHD %>%
+  mutate(
+    ADHD_subtype = case_when(
+      is.na(diva_diagnosis_type) ~ "none",
+      diva_diagnosis_type == "below_diva_criteria" ~ "none",
+      diva_diagnosis_type == "primary_hyperactive/impulsive" ~ "combined",
+      diva_diagnosis_type == "combined" ~ "combined",
+      diva_diagnosis_type == "primary_inattentive" ~ "inattentive"
+    )
+  )
+
 # save final merged dataset with study location
 write_csv(df_creativity_ADHD, "Data/df_creativity_ADHD.csv")
 
-table(
-  df_creativity_ADHD$declared_group,
-  df_creativity_ADHD$Study_Location
-)
