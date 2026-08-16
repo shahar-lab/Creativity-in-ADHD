@@ -2,3 +2,9 @@
 .Rhistory
 .RData
 .Ruserdata
+
+# Research data
+Data/
+
+# Fitted Bayesian models
+Analysis/models/

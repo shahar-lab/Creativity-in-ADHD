@@ -73,5 +73,33 @@ participant_excluded %>%
 df_creativity_ADHD <- cfg_all %>%
   inner_join(participant_data, by = c("ID" = "subjectid"))
 
-# save merged dataset
+# load study location data
+round1_location <- read_csv("Data/task/Study_Location/round1_location.csv") %>%
+  select(`Shahar ID`, Study_Location)
+
+round2_location <- read_csv("Data/task/Study_Location/round2_location.csv") %>%
+  select(`Shahar ID`, Study_Location)
+
+# combine rounds
+study_location <- bind_rows(
+  round1_location,
+  round2_location
+) %>%
+  rename(ID = `Shahar ID`)
+
+# add study location to main dataset
+df_creativity_ADHD <- df_creativity_ADHD %>%
+  left_join(study_location, by = "ID")
+
+# check study location merge
+nrow(df_creativity_ADHD)
+
+table(df_creativity_ADHD$Study_Location, useNA = "ifany")
+
+# save final merged dataset with study location
 write_csv(df_creativity_ADHD, "Data/df_creativity_ADHD.csv")
+
+table(
+  df_creativity_ADHD$declared_group,
+  df_creativity_ADHD$Study_Location
+)
