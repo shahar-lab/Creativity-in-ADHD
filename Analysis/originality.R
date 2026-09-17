@@ -1294,3 +1294,299 @@ ggsave(
   dpi = 300,
   bg = "white"
 )
+
+# ADHD PRESENTATION ANALYSIS: OVERALL ORIGINALITY ----
+
+
+# 1. Define presentation labels ----
+
+df <- df %>%
+  mutate(
+    presentation3 = factor(
+      ADHD_subtype,
+      levels = c(
+        "none",
+        "inattentive",
+        "combined"
+      ),
+      labels = c(
+        "Without ADHD",
+        "Inattentive",
+        "Combined/HI"
+      )
+    )
+  )
+
+table(df$presentation3, useNA = "ifany")
+
+# Prepare overall originality outcome ----
+
+orig_center <- mean(
+  df$`Gallery Orig`,
+  na.rm = TRUE
+)
+
+orig_scale <- sd(
+  df$`Gallery Orig`,
+  na.rm = TRUE
+)
+
+df <- df %>%
+  mutate(
+    originality_z =
+      (`Gallery Orig` - orig_center) / orig_scale
+  )
+
+# 2. Bayesian model: overall originality across ADHD presentations ----
+
+m_orig_presentation <- brm(
+  originality_z ~ presentation3,
+  data = df,
+  family = student(),
+  prior = priors_continuous,
+  chains = 4,
+  iter = 4000,
+  warmup = 1000,
+  cores = 4,
+  backend = "cmdstanr",
+  seed = 2026,
+  control = list(adapt_delta = 0.95)
+)
+
+summary(m_orig_presentation)
+
+# 3. Posterior estimates for each presentation group ----
+
+newdata_presentation <- tibble(
+  presentation3 = factor(
+    c(
+      "Without ADHD",
+      "Inattentive",
+      "Combined/HI"
+    ),
+    levels = levels(df$presentation3)
+  )
+)
+
+orig_presentation_epred_z <- posterior_epred(
+  m_orig_presentation,
+  newdata = newdata_presentation
+)
+
+# Back-transform to original originality units
+orig_presentation_epred <-
+  orig_presentation_epred_z * orig_scale + orig_center
+
+
+# 4. Posterior summary by presentation group ----
+
+orig_presentation_summary <- tibble(
+  group = c(
+    "Without ADHD",
+    "Inattentive",
+    "Combined/HI"
+  ),
+  
+  posterior_median = apply(
+    orig_presentation_epred, 2, median
+  ),
+  
+  lower_90 = apply(
+    orig_presentation_epred, 2, quantile, probs = 0.05
+  ),
+  
+  upper_90 = apply(
+    orig_presentation_epred, 2, quantile, probs = 0.95
+  )
+)
+
+orig_presentation_summary
+
+# Pairwise posterior contrasts for interpretation ----
+
+orig_presentation_contrasts <- tibble(
+  
+  contrast = c(
+    "Inattentive - Without ADHD",
+    "Combined/HI - Without ADHD",
+    "Combined/HI - Inattentive"
+  ),
+  
+  median = c(
+    median(orig_presentation_epred[, 2] -
+             orig_presentation_epred[, 1]),
+    
+    median(orig_presentation_epred[, 3] -
+             orig_presentation_epred[, 1]),
+    
+    median(orig_presentation_epred[, 3] -
+             orig_presentation_epred[, 2])
+  ),
+  
+  lower_90 = c(
+    quantile(orig_presentation_epred[, 2] -
+               orig_presentation_epred[, 1], 0.05),
+    
+    quantile(orig_presentation_epred[, 3] -
+               orig_presentation_epred[, 1], 0.05),
+    
+    quantile(orig_presentation_epred[, 3] -
+               orig_presentation_epred[, 2], 0.05)
+  ),
+  
+  upper_90 = c(
+    quantile(orig_presentation_epred[, 2] -
+               orig_presentation_epred[, 1], 0.95),
+    
+    quantile(orig_presentation_epred[, 3] -
+               orig_presentation_epred[, 1], 0.95),
+    
+    quantile(orig_presentation_epred[, 3] -
+               orig_presentation_epred[, 2], 0.95)
+  )
+)
+
+orig_presentation_contrasts
+
+
+# 5. Plot: posterior distributions by ADHD presentation ----
+
+library(tidyr)
+
+orig_presentation_long <- as_tibble(orig_presentation_epred) %>%
+  setNames(c("Without ADHD", "Inattentive", "Combined/HI")) %>%
+  pivot_longer(
+    cols = everything(),
+    names_to = "group",
+    values_to = "originality"
+  ) %>%
+  mutate(
+    group = factor(
+      group,
+      levels = c("Without ADHD", "Inattentive", "Combined/HI")
+    )
+  )
+
+orig_presentation_medians <- orig_presentation_long %>%
+  group_by(group) %>%
+  summarise(
+    median = median(originality),
+    .groups = "drop"
+  )
+
+p_orig_presentation <- ggplot(
+  orig_presentation_long,
+  aes(x = originality, fill = group, color = group)
+) +
+  geom_density(
+    alpha = 0.35,
+    linewidth = 1
+  ) +
+  
+  geom_point(
+    data = orig_presentation_medians,
+    aes(x = median, y = 0),
+    inherit.aes = FALSE,
+    color = "black",
+    size = 3
+  ) +
+  
+  scale_fill_manual(
+    values = c(
+      "Without ADHD" = "#CC79A7",
+      "Inattentive" = "#0072B2",
+      "Combined/HI" = "#009E73"
+    )
+  ) +
+  
+  scale_color_manual(
+    values = c(
+      "Without ADHD" = "#CC79A7",
+      "Inattentive" = "#0072B2",
+      "Combined/HI" = "#009E73"
+    )
+  ) +
+  
+  labs(
+    x = "Estimated overall originality",
+    y = NULL,
+    fill = NULL,
+    color = NULL
+  ) +
+  
+  theme_classic(base_size = 14) +
+  theme(
+    panel.background = element_rect(fill = "white", color = NA),
+    plot.background = element_rect(fill = "white", color = NA),
+    panel.grid = element_blank(),
+    
+    axis.text.y = element_blank(),
+    axis.ticks.y = element_blank(),
+    axis.line.y = element_blank(),
+    
+    axis.text.x = element_text(size = 13),
+    axis.title.x = element_text(size = 15),
+    
+    legend.position = "right",
+    legend.text = element_text(size = 13),
+    
+    aspect.ratio = 0.45
+  )
+
+p_orig_presentation
+
+# 6. Save plot ----
+
+ggsave(
+  filename = "Figures/originality/originality_posterior_by_ADHD_presentation.png",
+  plot = p_orig_presentation,
+  width = 9,
+  height = 4.5,
+  dpi = 300,
+  bg = "white"
+)
+
+# Recreate posterior estimates for originality presentation groups ----
+
+newdata_presentation <- tibble(
+  presentation3 = factor(
+    c(
+      "Without ADHD",
+      "Inattentive",
+      "Combined/HI"
+    ),
+    levels = levels(df$presentation3)
+  )
+)
+
+# Posterior expected values on standardized scale
+orig_presentation_epred_z <- posterior_epred(
+  m_orig_presentation,
+  newdata = newdata_presentation
+)
+
+# Back-transform to original originality scale
+orig_presentation_epred <-
+  orig_presentation_epred_z * orig_scale + orig_center
+
+# pd for Combined/HI - Inattentive originality contrast ----
+
+orig_diff_combined_vs_inattentive <-
+  orig_presentation_epred[, 3] -
+  orig_presentation_epred[, 2]
+
+orig_pd_combined_vs_inattentive <-
+  max(
+    mean(orig_diff_combined_vs_inattentive > 0),
+    mean(orig_diff_combined_vs_inattentive < 0)
+  ) * 100
+
+orig_pd_combined_vs_inattentive
+
+describe_posterior(
+  orig_presentation_epred[, 3] -
+    orig_presentation_epred[, 2],
+  centrality = "median",
+  ci = 0.90,
+  test = "pd"
+)
