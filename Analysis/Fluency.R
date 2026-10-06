@@ -496,7 +496,7 @@ p_fluency_groups <- ggplot(
   ) +
   
   labs(
-    x = "Estimated fluency",
+    x = "Posterior distributions of estimated fluency",
     y = NULL
   ) +
   
@@ -517,7 +517,7 @@ p_fluency_groups <- ggplot(
     ),
     
     axis.title.x = element_text(
-      size = 15
+      size = 13
     ),
     
     legend.position = "right",
@@ -525,7 +525,7 @@ p_fluency_groups <- ggplot(
       size = 13
     ),
     
-    aspect.ratio = 0.45
+    aspect.ratio = 0.28
   )
 
 p_fluency_groups
@@ -595,12 +595,12 @@ p_fluency_diff <- ggplot(
     ),
     
     axis.title.x = element_text(
-      size = 15
+      size = 13
     ),
     
     legend.position = "none",
     
-    aspect.ratio = 0.45
+    aspect.ratio = 0.28
   )
 
 p_fluency_diff
@@ -1101,3 +1101,435 @@ fluency_pd_inatt_vs_combined <-
   ) * 100
 
 fluency_pd_inatt_vs_combined
+
+# ============================================================
+# 25. PHASE-SPECIFIC FLUENCY: EXPLORATION VS EXPLOITATION
+# ============================================================
+
+
+# 25.1 Reconstruct number of saved shapes in each phase ----
+
+# "% galleries in exp" = proportion of saved shapes
+# that were saved during Exploration
+
+exp_gallery_prop <- df$`% galleries in exp`
+
+# If stored as percentages from 0 to 100,
+# convert to proportions from 0 to 1
+if (max(exp_gallery_prop, na.rm = TRUE) > 1) {
+  exp_gallery_prop <- exp_gallery_prop / 100
+}
+
+
+# Reconstruct number of saved shapes during Exploration
+raw_exploration_count <-
+  df$`#galleries` * exp_gallery_prop
+
+
+# Check how close reconstructed values are to whole numbers
+phase_count_rounding_error <-
+  max(
+    abs(
+      raw_exploration_count -
+        round(raw_exploration_count)
+    ),
+    na.rm = TRUE
+  )
+
+phase_count_rounding_error
+
+
+# Create integer counts for each phase
+df <- df %>%
+  mutate(
+    
+    fluency_exploration =
+      round(raw_exploration_count),
+    
+    fluency_exploitation =
+      `#galleries` - fluency_exploration
+  )
+
+
+# Check that the two phase counts sum to total fluency
+phase_count_check <- df %>%
+  summarise(
+    
+    max_sum_error =
+      max(
+        abs(
+          fluency_exploration +
+            fluency_exploitation -
+            `#galleries`
+        ),
+        na.rm = TRUE
+      ),
+    
+    min_exploration =
+      min(
+        fluency_exploration,
+        na.rm = TRUE
+      ),
+    
+    min_exploitation =
+      min(
+        fluency_exploitation,
+        na.rm = TRUE
+      )
+  )
+
+phase_count_check
+
+
+
+# 25.2 Prepare long-format phase-specific fluency data ----
+
+fluency_phase <- df %>%
+  select(
+    ID,
+    group,
+    group_c,
+    fluency_exploration,
+    fluency_exploitation
+  ) %>%
+  
+  pivot_longer(
+    cols = c(
+      fluency_exploration,
+      fluency_exploitation
+    ),
+    names_to = "phase",
+    values_to = "fluency"
+  ) %>%
+  
+  mutate(
+    
+    phase = recode(
+      phase,
+      "fluency_exploration" = "Exploration",
+      "fluency_exploitation" = "Exploitation"
+    ),
+    
+    phase = factor(
+      phase,
+      levels = c(
+        "Exploration",
+        "Exploitation"
+      )
+    ),
+    
+    # Contrast coding:
+    # Exploration  = -0.5
+    # Exploitation = +0.5
+    phase_c = case_when(
+      phase == "Exploration"  ~ -0.5,
+      phase == "Exploitation" ~  0.5
+    )
+  )
+
+
+
+# 25.3 Descriptive statistics by Group and Phase ----
+
+fluency_phase_descriptives <- fluency_phase %>%
+  group_by(
+    group,
+    phase
+  ) %>%
+  summarise(
+    n = n(),
+    mean = mean(
+      fluency,
+      na.rm = TRUE
+    ),
+    sd = sd(
+      fluency,
+      na.rm = TRUE
+    ),
+    median = median(
+      fluency,
+      na.rm = TRUE
+    ),
+    .groups = "drop"
+  )
+
+fluency_phase_descriptives
+
+
+
+# 25.4 Priors for phase-specific fluency model ----
+
+priors_fluency_phase <- c(
+  
+  # Group, Phase, and Group x Phase
+  prior(
+    normal(0, 0.5),
+    class = "b"
+  ),
+  
+  # Expected phase-specific counts
+  prior(
+    normal(log(20), 0.75),
+    class = "Intercept"
+  ),
+  
+  # Between-participant variability
+  prior(
+    exponential(1),
+    class = "sd"
+  ),
+  
+  # Negative-binomial dispersion
+  prior(
+    exponential(0.5),
+    class = "shape"
+  )
+)
+
+
+
+# 25.5 Bayesian Group x Phase fluency model ----
+
+m_fluency_phase <- brm(
+  
+  fluency ~
+    group_c * phase_c +
+    (1 | ID),
+  
+  data = fluency_phase,
+  
+  family =
+    negbinomial(
+      link = "log"
+    ),
+  
+  prior =
+    priors_fluency_phase,
+  
+  chains = 4,
+  iter = 4000,
+  warmup = 1000,
+  cores = 4,
+  
+  backend = "cmdstanr",
+  seed = 2026,
+  
+  control = list(
+    adapt_delta = 0.95
+  )
+)
+
+summary(m_fluency_phase)
+
+
+
+# 25.6 Posterior summary of fixed effects ----
+
+fluency_phase_posterior <- describe_posterior(
+  m_fluency_phase,
+  effects = "fixed",
+  centrality = "median",
+  ci = 0.90,
+  test = "pd"
+)
+
+fluency_phase_posterior
+
+
+
+# 25.7 Posterior expected fluency by Group and Phase ----
+
+fluency_phase_draws <-
+  as_draws_df(m_fluency_phase) %>%
+  mutate(
+    
+    # Without ADHD - Exploration
+    without_exploration =
+      exp(
+        b_Intercept -
+          0.5 * b_group_c -
+          0.5 * b_phase_c +
+          0.25 * `b_group_c:phase_c`
+      ),
+    
+    # ADHD - Exploration
+    adhd_exploration =
+      exp(
+        b_Intercept +
+          0.5 * b_group_c -
+          0.5 * b_phase_c -
+          0.25 * `b_group_c:phase_c`
+      ),
+    
+    # Without ADHD - Exploitation
+    without_exploitation =
+      exp(
+        b_Intercept -
+          0.5 * b_group_c +
+          0.5 * b_phase_c -
+          0.25 * `b_group_c:phase_c`
+      ),
+    
+    # ADHD - Exploitation
+    adhd_exploitation =
+      exp(
+        b_Intercept +
+          0.5 * b_group_c +
+          0.5 * b_phase_c +
+          0.25 * `b_group_c:phase_c`
+      ),
+    
+    
+    # ADHD - Without ADHD difference within each phase
+    diff_exploration =
+      adhd_exploration -
+      without_exploration,
+    
+    diff_exploitation =
+      adhd_exploitation -
+      without_exploitation,
+    
+    
+    # Group x Phase interaction on multiplicative scale
+    interaction_rate_ratio =
+      exp(`b_group_c:phase_c`)
+  )
+
+
+
+# 25.8 Posterior group differences within each phase ----
+
+fluency_exploration_difference <-
+  describe_posterior(
+    fluency_phase_draws$diff_exploration,
+    centrality = "median",
+    ci = 0.90,
+    test = "pd"
+  )
+
+fluency_exploitation_difference <-
+  describe_posterior(
+    fluency_phase_draws$diff_exploitation,
+    centrality = "median",
+    ci = 0.90,
+    test = "pd"
+  )
+
+
+fluency_exploration_difference
+fluency_exploitation_difference
+
+
+
+# 25.9 Posterior expected counts for each Group x Phase cell ----
+
+fluency_phase_group_summary <- tibble(
+  
+  group = c(
+    "Without ADHD",
+    "ADHD",
+    "Without ADHD",
+    "ADHD"
+  ),
+  
+  phase = c(
+    "Exploration",
+    "Exploration",
+    "Exploitation",
+    "Exploitation"
+  ),
+  
+  posterior_median = c(
+    median(
+      fluency_phase_draws$without_exploration
+    ),
+    median(
+      fluency_phase_draws$adhd_exploration
+    ),
+    median(
+      fluency_phase_draws$without_exploitation
+    ),
+    median(
+      fluency_phase_draws$adhd_exploitation
+    )
+  ),
+  
+  lower_90 = c(
+    quantile(
+      fluency_phase_draws$without_exploration,
+      0.05
+    ),
+    quantile(
+      fluency_phase_draws$adhd_exploration,
+      0.05
+    ),
+    quantile(
+      fluency_phase_draws$without_exploitation,
+      0.05
+    ),
+    quantile(
+      fluency_phase_draws$adhd_exploitation,
+      0.05
+    )
+  ),
+  
+  upper_90 = c(
+    quantile(
+      fluency_phase_draws$without_exploration,
+      0.95
+    ),
+    quantile(
+      fluency_phase_draws$adhd_exploration,
+      0.95
+    ),
+    quantile(
+      fluency_phase_draws$without_exploitation,
+      0.95
+    ),
+    quantile(
+      fluency_phase_draws$adhd_exploitation,
+      0.95
+    )
+  )
+)
+
+fluency_phase_group_summary
+
+
+
+# 25.10 Group x Phase interaction ----
+
+# Interaction is expressed as a ratio of rate ratios.
+# A value of 1 = no Group x Phase interaction.
+
+fluency_phase_interaction_summary <- tibble(
+  
+  median =
+    median(
+      fluency_phase_draws$interaction_rate_ratio
+    ),
+  
+  lower_90 =
+    quantile(
+      fluency_phase_draws$interaction_rate_ratio,
+      0.05
+    ),
+  
+  upper_90 =
+    quantile(
+      fluency_phase_draws$interaction_rate_ratio,
+      0.95
+    ),
+  
+  pd =
+    max(
+      mean(
+        fluency_phase_draws$`b_group_c:phase_c` > 0
+      ),
+      mean(
+        fluency_phase_draws$`b_group_c:phase_c` < 0
+      )
+    ) * 100
+)
+
+fluency_phase_interaction_summary

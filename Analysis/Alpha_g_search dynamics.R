@@ -53,9 +53,9 @@ df <- df %>%
 
 table(df$group, useNA = "ifany")
 
------------------------------------------------------
+#-----------------------------------------------------
 # 4. ALPHA: Relative exploration-exploitation balance 
------------------------------------------------------
+#-----------------------------------------------------
   
 # 4.1 Alpha descriptives by group ----
 
@@ -297,7 +297,7 @@ p_alpha_groups <- ggplot(
   ) +
   
   labs(
-    x = "Estimated α score (standardized)",
+    x = "Posterior distributions of estimated α (standardized)",
     y = NULL
   ) +
   
@@ -314,7 +314,7 @@ p_alpha_groups <- ggplot(
     legend.position = "right",
     legend.text = element_text(size = 13),
     
-    aspect.ratio = 0.45
+    aspect.ratio = 0.28
   )
 
 p_alpha_groups
@@ -369,7 +369,7 @@ p_alpha_diff <- ggplot(
     axis.text.x = element_text(size = 13),
     axis.title.x = element_text(size = 15),
     
-    aspect.ratio = 0.45
+    aspect.ratio = 0.28
   )
 
 p_alpha_diff
@@ -630,7 +630,7 @@ p_g_groups <- ggplot(
     )
   ) +
   labs(
-    x = "Estimated g score (standardized)",
+    x = "Posterior distributions of estimated g (standardized)",
     y = NULL
   ) +
   theme_classic(base_size = 14) +
@@ -642,7 +642,7 @@ p_g_groups <- ggplot(
     axis.title.x = element_text(size = 15),
     legend.position = "right",
     legend.text = element_text(size = 13),
-    aspect.ratio = 0.45
+    aspect.ratio = 0.28
   )
 
 p_g_groups
@@ -685,7 +685,7 @@ p_g_diff <- ggplot(
     axis.line.y = element_blank(),
     axis.text.x = element_text(size = 13),
     axis.title.x = element_text(size = 15),
-    aspect.ratio = 0.45
+    aspect.ratio = 0.28
   )
 
 p_g_diff

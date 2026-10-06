@@ -463,7 +463,7 @@ p_orig_diff <- ggplot(
   ) +
   
   labs(
-    x = "Estimated ADHD - Without ADHD difference in overall originality",
+    x = "Estimated ADHD - Without ADHD difference in originality",
     y = NULL,
   ) +
   
@@ -481,12 +481,12 @@ p_orig_diff <- ggplot(
     axis.line.y = element_blank(),
     
     axis.text.x = element_text(size = 13),
-    axis.title.x = element_text(size = 15),
+    axis.title.x = element_text(size = 13),
     
     legend.position = "none",
     
     # Flatter figure, similar to previous paper
-    aspect.ratio = 0.45
+    aspect.ratio = 0.28
   )
 
 p_orig_diff
@@ -573,7 +573,7 @@ p_orig_groups <- ggplot(
   ) +
   
   labs(
-    x = "Estimated overall originality",
+    x = "Posterior distributions of estimated originality",
     y = NULL,
   ) +
   
@@ -593,14 +593,14 @@ p_orig_groups <- ggplot(
     
     # X-axis formatting
     axis.text.x = element_text(size = 13),
-    axis.title.x = element_text(size = 15),
+    axis.title.x = element_text(size = 13),
     
     # legend
     legend.position = "right",
     legend.text = element_text(size = 13),
     
     # Make the figure flatter
-    aspect.ratio = 0.45
+    aspect.ratio = 0.28
   )
 
 p_orig_groups
@@ -756,8 +756,6 @@ orig_phase_posterior
 # Extract posterior draws
 orig_phase_draws <- as_draws_df(m_orig_phase)
 
-# Calculate the ADHD - Without ADHD difference
-# separately for Exploration and Exploitation
 orig_phase_draws <- orig_phase_draws %>%
   mutate(
     
@@ -769,12 +767,21 @@ orig_phase_draws <- orig_phase_draws %>%
     diff_exploitation_z =
       b_group_c + 0.5 * `b_group_c:phase_c`,
     
-    # Transform differences back to original originality units
+    # Transform phase-specific group differences
+    # back to original originality units
     diff_exploration_orig =
       diff_exploration_z * orig_phase_scale,
     
     diff_exploitation_orig =
-      diff_exploitation_z * orig_phase_scale
+      diff_exploitation_z * orig_phase_scale,
+    
+    # Group × Phase interaction
+    interaction_z =
+      `b_group_c:phase_c`,
+    
+    # Transform interaction back to original originality units
+    interaction_orig =
+      `b_group_c:phase_c` * orig_phase_scale
   )
 
 ## 20.8 Posterior summaries of group differences by phase ----
@@ -817,6 +824,17 @@ orig_exploitation_difference_z <- describe_posterior(
 
 orig_exploration_difference_z
 orig_exploitation_difference_z
+
+## 20.9b Group × Phase interaction in original originality units ----
+
+orig_interaction_difference <- describe_posterior(
+  orig_phase_draws$interaction_orig,
+  centrality = "median",
+  ci = 0.90,
+  test = "pd"
+)
+
+orig_interaction_difference
 
 # 20.10 Plot posterior group differences by search phase ----
 
@@ -941,7 +959,7 @@ p_orig_phase_diff <- ggplot(
     legend.position = "right",
     legend.text = element_text(size = 13),
     
-    aspect.ratio = 0.45
+    aspect.ratio = 0.28
   )
 
 p_orig_phase_diff
@@ -1165,7 +1183,7 @@ p_orig_exploration_groups <- ggplot(
   ) +
   
   labs(
-    x = "Estimated exploration originality",
+    x = "Estimated originality during exploration",
     y = NULL
   ) +
   
@@ -1190,7 +1208,7 @@ p_orig_exploration_groups <- ggplot(
     legend.position = "right",
     legend.text = element_text(size = 13),
     
-    aspect.ratio = 0.45
+    aspect.ratio = 0.28
   )
 
 p_orig_exploration_groups
@@ -1245,7 +1263,7 @@ p_orig_exploitation_groups <- ggplot(
   ) +
   
   labs(
-    x = "Estimated exploitation originality",
+    x = "Estimated originality during exploitation",
     y = NULL
   ) +
   
@@ -1270,7 +1288,7 @@ p_orig_exploitation_groups <- ggplot(
     legend.position = "right",
     legend.text = element_text(size = 13),
     
-    aspect.ratio = 0.45
+    aspect.ratio = 0.28
   )
 
 p_orig_exploitation_groups
@@ -1508,7 +1526,7 @@ p_orig_presentation <- ggplot(
   ) +
   
   labs(
-    x = "Estimated overall originality",
+    x = "Posterior distributions of estimated originality",
     y = NULL,
     fill = NULL,
     color = NULL
